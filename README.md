@@ -107,10 +107,10 @@ startpage/
 |-- screenshot.jpg       # README preview; excluded from the slideshow
 |-- README.md
 |-- LICENSE
-`-- wallpapers/
+|-- wallpapers/
     |-- 1.png / 2.jpg / ...
     |-- example.png
-    `-- example.prompt.txt
+    |-- example.prompt.txt
 ```
 
 The page initializes search, search focus, shortcuts, wallpapers, and appearance separately. Panels share appearance variables; inner controls remain transparent to avoid stacking tint and blur.
