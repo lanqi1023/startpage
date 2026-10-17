@@ -6,7 +6,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="dark">
   <title>Start Page</title>
-  <meta name="description" content="一个安静、简洁的个人起始页。">
   <style>
     :root {
       --bg: #101215;
@@ -241,7 +240,9 @@
       box-shadow: 0 16px 48px rgba(0, 0, 0, .3);
       position: absolute;
       z-index: 5;
-      top: calc(100% + 18px);
+      bottom: calc(100% + 18px);
+      max-height: min(240px, 40svh);
+      overflow-y: auto;
       left: -10px;
       width: 168px;
       display: grid;
@@ -923,34 +924,42 @@
 
       function initSearchFocus() {
         const search = document.getElementById("search-form");
-        function updateSearchDimMask() {
-          const rect = search.getBoundingClientRect();
-          const { left, top, right, bottom, width, height } = rect;
-          const radius = Math.min(parseFloat(getComputedStyle(search).borderTopLeftRadius) || 0, width / 2, height / 2);
-          const viewportWidth = document.documentElement.clientWidth;
-          const viewportHeight = window.innerHeight;
-          // Exclude the rounded search area so its transparent fill cannot sample the dimmer.
-          const outline = `M0 0H${viewportWidth}V${viewportHeight}H0Z`;
-          const hole = [
+        const menu = document.getElementById("engine-menu");
+
+        function roundedOutline(element) {
+          const { left, top, right, bottom, width, height } = element.getBoundingClientRect();
+          const radius = Math.min(parseFloat(getComputedStyle(element).borderTopLeftRadius) || 0, width / 2, height / 2);
+          return [
             `M${left + radius} ${top}H${right - radius}`,
             `A${radius} ${radius} 0 0 1 ${right} ${top + radius}V${bottom - radius}`,
             `A${radius} ${radius} 0 0 1 ${right - radius} ${bottom}H${left + radius}`,
             `A${radius} ${radius} 0 0 1 ${left} ${bottom - radius}V${top + radius}`,
             `A${radius} ${radius} 0 0 1 ${left + radius} ${top}Z`
           ].join(" ");
-          document.body.style.setProperty("--search-dim-mask", `path(evenodd, "${outline} ${hole}")`);
         }
-        input.addEventListener("focus", () => {
-          updateSearchDimMask();
-          document.body.classList.add("search-focused");
-        });
+
+        function updateSearchDimMask() {
+          const outline = `M0 0H${document.documentElement.clientWidth}V${window.innerHeight}H0Z`;
+          const holes = [roundedOutline(search)];
+          if (!menu.hidden) holes.push(roundedOutline(menu));
+          document.body.style.setProperty("--search-dim-mask", `path(evenodd, "${outline} ${holes.join(" ")}")`);
+        }
+
+        function syncFocus() {
+          const active = search.contains(document.activeElement) || !menu.hidden;
+          if (active) updateSearchDimMask();
+          document.body.classList.toggle("search-focused", active);
+        }
+
+        search.addEventListener("focusin", syncFocus);
+        search.addEventListener("focusout", () => queueMicrotask(syncFocus));
         window.addEventListener("resize", updateSearchDimMask);
         window.addEventListener("scroll", updateSearchDimMask, { passive: true });
         new ResizeObserver(updateSearchDimMask).observe(document.querySelector("main"));
-        input.addEventListener("blur", () => document.body.classList.remove("search-focused"));
+        return syncFocus;
       }
 
-      function initSearch() {
+      function initSearch(syncSearchFocus) {
         const engines = {
           bing: { name: "Bing", action: "https://www.bing.com/search", param: "q" },
           google: { name: "Google", action: "https://www.google.com/search", param: "q" },
@@ -978,6 +987,7 @@
           engineMenu.hidden = !open;
           engineToggle.setAttribute("aria-expanded", String(open));
           if (open && focusOption) buttons.find(button => button.dataset.engine === selected).focus();
+          syncSearchFocus();
         }
         engineToggle.addEventListener("click", () => setEngineMenu(engineMenu.hidden, true));
         engineToggle.addEventListener("keydown", event => {
@@ -1636,8 +1646,8 @@
       }
 
       const updateWallpaperTheme = initAppearance();
-      initSearchFocus();
-      initSearch();
+      const syncSearchFocus = initSearchFocus();
+      initSearch(syncSearchFocus);
       initQuickLinks();
       initWallpapers(updateWallpaperTheme);
       input.focus({ preventScroll: true });
