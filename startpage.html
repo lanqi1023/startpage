@@ -1,0 +1,1649 @@
+<!doctype html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>起始页 · Startpage</title>
+  <meta name="description" content="一个安静、简洁的个人起始页。">
+  <style>
+    :root {
+      --bg: #101215;
+      --surface-opacity: .2;
+      --surface-blur: 5px;
+      --surface: rgba(var(--surface-rgb, 19, 25, 34), var(--surface-opacity));
+      --line: rgba(var(--border-rgb, 235, 242, 255), .18);
+      --text: #f0f1f3;
+      --muted: #8d939d;
+      --accent: #bdd0ff;
+      --search-focus-blur: 4px;
+      --toolbar-right: 28px;
+      --toolbar-bottom: 25px;
+      --toolbar-height: 52px;
+      --panel-gap: 12px;
+      --layer-links: 1;
+      --layer-toolbar: 2;
+      --layer-dimmer: 3;
+      --layer-search: 4;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      min-height: 100%;
+    }
+
+    body {
+      min-height: 100vh;
+      min-height: 100svh;
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, "Segoe UI", "Microsoft YaHei", system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .wallpapers {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    .wallpaper {
+      position: absolute;
+      inset: 0;
+      background-position: center;
+      background-size: cover;
+      opacity: 0;
+      transition: opacity .8s cubic-bezier(.22, 1, .36, 1);
+    }
+
+    .wallpaper.is-visible {
+      opacity: 1;
+    }
+
+    .wallpapers::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: rgba(5, 9, 15, .06);
+      -webkit-backdrop-filter: blur(var(--search-focus-blur));
+      backdrop-filter: blur(var(--search-focus-blur));
+      opacity: 0;
+      transition: opacity .35s ease;
+    }
+
+    body.search-focused .wallpapers::after {
+      opacity: 1;
+    }
+
+    /* Dim surrounding content without changing glass panels' compositing roots. */
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: var(--layer-dimmer);
+      pointer-events: none;
+      background: rgba(0, 0, 0, .16);
+      clip-path: var(--search-dim-mask);
+      opacity: 0;
+      transition: opacity .35s ease;
+    }
+
+    body.search-focused::after {
+      opacity: 1;
+    }
+
+    /* Keep backdrop-filter ancestors opaque so their sampling roots stay stable. */
+    .link-name,
+    .icon-box,
+    .wallpaper-controls button > svg {
+      transition: opacity .3s ease;
+    }
+
+    body.search-focused .link-name,
+    body.search-focused .icon-box,
+    body.search-focused .wallpaper-controls button > svg {
+      opacity: .28;
+    }
+
+    body.search-focused .link-card:hover .link-name,
+    body.search-focused .link-card:hover .icon-box,
+    body.search-focused .wallpaper-controls:hover button > svg {
+      opacity: 1;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    button,
+    input,
+    textarea {
+      font: inherit;
+    }
+
+    button:focus-visible,
+    a:focus-visible,
+    input:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 3px;
+    }
+
+    .page {
+      position: relative;
+      width: min(100% - 56px, 1100px);
+      min-height: 100vh;
+      min-height: 100svh;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    body.is-immersive .page {
+      pointer-events: none;
+    }
+
+    body.is-immersive .search-shell,
+    body.is-immersive .engine,
+    body.is-immersive .link-card,
+    body.is-immersive .add-link-button {
+      opacity: 0;
+    }
+
+    body.is-immersive .link-entry .link-edit {
+      opacity: 0;
+    }
+
+    main {
+      width: min(100%, 720px);
+      margin: auto;
+      padding: 164px 0 10px;
+    }
+
+    .search-shell {
+      border: 1px solid var(--line);
+      box-shadow: 0 12px 48px rgba(0, 0, 0, .12), inset 0 1px rgba(255, 255, 255, .05);
+      position: relative;
+      z-index: var(--layer-search);
+      min-height: 64px;
+      display: flex;
+      align-items: center;
+      gap: 13px;
+      padding: 6px 7px 6px 18px;
+      border-radius: 32px;
+      transition: border-color .2s, background .2s, box-shadow .2s, opacity .45s ease;
+    }
+
+    #query {
+      min-width: 0;
+      flex: 1;
+      border: 0;
+      outline: 0;
+      background: transparent;
+      color: var(--text);
+      font-size: 15px;
+    }
+
+    #query::placeholder {
+      color: #a4adbb;
+    }
+
+    .engine-picker {
+      position: relative;
+      flex: 0 0 auto;
+    }
+
+    #engine-toggle {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 8px 4px;
+      border: 0;
+      border-radius: 10px;
+      color: #cbd4e4;
+      cursor: pointer;
+    }
+
+    #engine-logo,
+    .engine-brand {
+      display: grid;
+      place-items: center;
+      width: 24px;
+      height: 24px;
+    }
+
+    #engine-logo svg,
+    .engine-brand svg {
+      display: block;
+      width: 24px;
+      height: 24px;
+    }
+
+    .engine-chevron {
+      width: 12px;
+      height: 12px;
+      transition: transform .2s;
+    }
+
+    #engine-toggle[aria-expanded="true"] .engine-chevron {
+      transform: rotate(180deg);
+    }
+
+    .engine-menu {
+      border: 1px solid var(--line);
+      box-shadow: 0 16px 48px rgba(0, 0, 0, .3);
+      position: absolute;
+      z-index: 5;
+      top: calc(100% + 18px);
+      left: -10px;
+      width: 168px;
+      display: grid;
+      gap: 4px;
+      padding: 6px;
+      border-radius: 16px;
+    }
+
+    .engine-menu[hidden] {
+      display: none;
+    }
+
+    .engine-menu .engine {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-align: left;
+    }
+
+    .engine {
+      padding: 8px 19px;
+      border: 0;
+      border-radius: 9px;
+      color: #b0bac9;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .18s, color .18s, opacity .45s ease;
+    }
+
+    .engine:hover {
+      color: var(--text);
+    }
+
+    .engine[aria-pressed="true"] {
+      box-shadow: inset 0 1px rgba(255, 255, 255, .1);
+      color: #e3ebff;
+    }
+
+    .quick-section {
+      position: relative;
+      z-index: var(--layer-links);
+      margin-top: 32px;
+    }
+
+    .add-link-button {
+      position: relative;
+      width: 100%;
+      min-height: 74px;
+      display: grid;
+      place-items: center;
+      border: 1px dashed var(--line);
+      border-radius: 16px;
+      color: #cbd4e4;
+      cursor: pointer;
+      opacity: 0;
+      transition: background .18s, color .18s, opacity .2s ease;
+    }
+
+    .add-link-button:hover,
+    .add-link-button:focus-visible {
+      color: #fff;
+      opacity: 1;
+    }
+
+    .add-link-button svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    .links {
+      position: relative;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .link-card {
+      border: 1px solid var(--line);
+      min-width: 0;
+      min-height: 74px;
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      padding: 12px;
+      border-radius: 16px;
+      touch-action: none;
+      user-select: none;
+      transition: background .18s, border-color .18s, transform .18s, opacity .45s ease;
+    }
+
+    .link-card:hover {
+      transform: translateY(-2px);
+    }
+
+    .link-entry {
+      position: relative;
+      min-width: 0;
+    }
+
+    .link-entry .link-card {
+      height: 100%;
+      padding-right: 38px;
+    }
+
+    .link-entry.is-dragging .link-card {
+      opacity: .24;
+      transform: none;
+    }
+
+    .link-drag-ghost {
+      position: fixed;
+      z-index: 20;
+      margin: 0;
+      pointer-events: none;
+      transform: scale(1.025);
+      transition: none;
+      will-change: left, top, transform;
+      box-shadow: 0 14px 36px rgba(0, 0, 0, .32);
+    }
+
+    body.is-link-dragging,
+    body.is-link-dragging * {
+      cursor: grabbing !important;
+    }
+
+    .link-edit {
+      position: absolute;
+      top: 50%;
+      right: 9px;
+      width: 28px;
+      height: 28px;
+      display: grid;
+      place-items: center;
+      padding: 0;
+      border: 0;
+      border-radius: 7px;
+      color: #b9c5d7;
+      cursor: pointer;
+      opacity: 0;
+      transform: translateY(-50%);
+      transition: opacity .18s, background .18s;
+    }
+
+    .link-edit:hover,
+    .link-edit:focus-visible {
+      opacity: 1;
+    }
+
+    .link-edit:hover {
+      color: #fff;
+    }
+
+    .link-edit svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    @media (hover: none) {
+      .link-edit {
+        opacity: 1;
+      }
+    }
+
+    .icon-box {
+      width: 28px;
+      height: 28px;
+      flex: 0 0 auto;
+      display: grid;
+      place-items: center;
+      color: #cbd4e4;
+    }
+
+    .icon-box img {
+      width: 25px;
+      height: 25px;
+    }
+
+    .icon-box img {
+      display: block;
+    }
+
+    .link-name {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: #e0e3e9;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .link-dialog {
+      width: min(100% - 32px, 420px);
+      max-height: calc(100vh - 32px);
+      margin: auto;
+      padding: 28px;
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      box-shadow: 0 24px 70px rgba(0, 0, 0, .4);
+      color: var(--text);
+    }
+
+    .link-dialog h2 {
+      margin: 0 0 22px;
+      font-size: 17px;
+      font-weight: 600;
+    }
+
+    .link-dialog label {
+      display: block;
+      margin: 15px 0 8px;
+      color: #c2cbd8;
+      font-size: 13px;
+    }
+
+    .link-dialog input {
+      width: 100%;
+      height: 42px;
+      padding: 0 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      outline: 0;
+      color: var(--text);
+    }
+
+    .link-dialog input::placeholder {
+      color: #798597;
+    }
+
+    .svg-field-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 15px 0 8px;
+    }
+
+    .svg-field-head label {
+      margin: 0;
+    }
+
+    .svg-preview {
+      width: 28px;
+      height: 28px;
+      display: grid;
+      place-items: center;
+    }
+
+    .svg-preview img {
+      width: 25px;
+      height: 25px;
+    }
+
+    .link-dialog textarea {
+      width: 100%;
+      min-height: 102px;
+      padding: 10px 12px;
+      resize: vertical;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      outline: 0;
+      color: var(--text);
+      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+      font-size: 11px;
+      line-height: 1.5;
+    }
+
+    .dialog-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 25px;
+    }
+
+    .dialog-actions button {
+      min-height: 36px;
+      padding: 0 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      color: var(--text);
+      cursor: pointer;
+    }
+
+    .dialog-actions .delete {
+      margin-right: auto;
+      color: #e0a7a7;
+    }
+
+    .dialog-status {
+      margin: 14px 0 0;
+      color: #e5b0a8;
+      font-size: 12px;
+    }
+
+    .wallpaper-controls {
+      border: 1px solid var(--line);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, .16);
+      position: fixed;
+      right: var(--toolbar-right);
+      bottom: var(--toolbar-bottom);
+      z-index: var(--layer-toolbar);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 6px;
+      border-radius: 18px;
+      transition: opacity .3s ease;
+    }
+
+    body.is-immersive .wallpaper-controls {
+      opacity: 0;
+    }
+
+    body.is-immersive .wallpaper-controls:hover,
+    body.is-immersive .wallpaper-controls:focus-within {
+      opacity: 1;
+    }
+
+    .wallpaper-controls button {
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      border: 0;
+      border-radius: 8px;
+      color: #d3dce9;
+      cursor: pointer;
+      transition: background .18s, color .18s;
+    }
+
+    .wallpaper-controls button:hover {
+      color: #fff;
+    }
+
+    .wallpaper-controls button:disabled {
+      opacity: .38;
+      cursor: default;
+    }
+
+    .wallpaper-controls button:disabled:hover {
+      color: #d3dce9;
+    }
+
+    .wallpaper-controls svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .wallpaper-controls button:active {
+      transform: scale(.92);
+    }
+
+    .appearance-dialog {
+      position: fixed;
+      inset: auto var(--toolbar-right) calc(var(--toolbar-bottom) + var(--toolbar-height) + var(--panel-gap)) auto;
+      margin: 0;
+      width: min(100% - 32px, 304px);
+      max-height: calc(100svh - var(--toolbar-bottom) - var(--toolbar-height) - var(--panel-gap) - 16px);
+      overflow: auto;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      color: var(--text);
+      box-shadow: 0 24px 70px rgba(0, 0, 0, .4);
+    }
+
+    .appearance-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .appearance-dialog h2 {
+      margin: 0;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .appearance-dialog label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #cbd4e4;
+    }
+
+    .appearance-dialog input {
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    .appearance-dialog input[type="range"] {
+      display: block;
+      width: 100%;
+      height: 18px;
+      margin: 8px 0 16px;
+    }
+
+    .appearance-colors {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin: 2px 0 16px;
+    }
+
+    .appearance-colors label {
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      gap: 8px;
+    }
+
+    .appearance-dialog input[type="color"] {
+      width: 28px;
+      height: 24px;
+      padding: 0;
+      border: 0;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .appearance-dialog input[type="color"]::-webkit-color-swatch-wrapper {
+      padding: 0;
+    }
+
+    .appearance-dialog input[type="color"]::-webkit-color-swatch {
+      border: 1px solid var(--line);
+      border-radius: 6px;
+    }
+
+    .appearance-dialog input[type="color"]::-moz-color-swatch {
+      border: 1px solid var(--line);
+      border-radius: 6px;
+    }
+
+    .appearance-dialog .auto-theme-label {
+      padding-top: 14px;
+      border-top: 1px solid var(--line);
+      gap: 12px;
+    }
+
+    .appearance-dialog input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      margin: 0;
+    }
+
+    .appearance-dialog output {
+      color: var(--text);
+      font-size: 11px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .appearance-dialog button {
+      padding: 4px 8px;
+      border: 0;
+      border-radius: 7px;
+      color: #b0bac9;
+      font-size: 11px;
+      cursor: pointer;
+    }
+
+    /* Apply the shared material once per panel to avoid stacked tint and blur. */
+    .search-shell,
+    .engine-menu,
+    .add-link-button,
+    .link-card,
+    .link-dialog,
+    .wallpaper-controls,
+    .appearance-dialog {
+      background: var(--surface);
+      border-color: var(--line);
+      -webkit-backdrop-filter: blur(var(--surface-blur));
+      backdrop-filter: blur(var(--surface-blur));
+    }
+
+    #engine-toggle,
+    .engine,
+    .link-edit,
+    .wallpaper-controls button,
+    .link-dialog input,
+    .link-dialog textarea,
+    .dialog-actions button,
+    .appearance-dialog button,
+    .appearance-dialog input[type="color"] {
+      background: transparent;
+      border-color: var(--line);
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+    }
+
+    #engine-toggle:hover,
+    .engine:hover,
+    .engine[aria-pressed="true"],
+    .link-edit:hover,
+    .wallpaper-controls button:hover,
+    .dialog-actions button:hover,
+    .appearance-dialog button:hover {
+      background: rgba(var(--border-rgb, 235, 242, 255), .08);
+    }
+
+    .link-dialog::backdrop,
+    .appearance-dialog::backdrop {
+      background: transparent;
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+    }
+
+    @media (max-width: 720px) {
+      .page {
+        width: min(100% - 40px, 600px);
+      }
+
+      .links {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 490px) {
+      .page {
+        width: min(100% - 32px, 420px);
+      }
+
+      main {
+        padding: 114px 0 32px;
+      }
+
+      .engine {
+        padding: 9px 15px;
+        font-size: 13px;
+      }
+
+      .search-shell {
+        gap: 9px;
+        padding-left: 14px;
+      }
+
+      #query {
+        font-size: 14px;
+      }
+
+      .quick-section {
+        margin-top: 24px;
+      }
+
+      .links {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 11px;
+      }
+
+      .link-card {
+        min-height: 66px;
+      }
+
+      :root {
+        --toolbar-right: 16px;
+        --toolbar-bottom: 16px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        transition: none !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="wallpapers" class="wallpapers" aria-hidden="true">
+    <div class="wallpaper"></div>
+    <div class="wallpaper"></div>
+  </div>
+  <div class="page">
+    <main>
+      <form id="search-form" class="search-shell" autocomplete="off" role="search">
+        <div class="engine-picker">
+          <button id="engine-toggle" type="button" aria-label="Choose search engine" aria-expanded="false" aria-controls="engine-menu">
+            <span id="engine-logo" aria-hidden="true"></span>
+            <svg class="engine-chevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m4 6 4 4 4-4"/></svg>
+          </button>
+          <div id="engine-menu" class="engine-menu" role="group" aria-label="Search engine" hidden>
+            <button class="engine" type="button" data-engine="bing" aria-pressed="true">Bing</button>
+            <button class="engine" type="button" data-engine="google" aria-pressed="false">Google</button>
+            <button class="engine" type="button" data-engine="baidu" aria-pressed="false">百度</button>
+          </div>
+        </div>
+        <input id="query" name="q" type="search" aria-label="搜索网页" autofocus>
+      </form>
+
+      <nav class="quick-section" aria-label="快捷网站">
+        <div class="links">
+          <button id="add-link" class="add-link-button" type="button" aria-label="添加快捷链接" title="添加快捷链接">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+          </button>
+        </div>
+      </nav>
+    </main>
+  </div>
+
+  <div class="wallpaper-controls" role="group" aria-label="背景控制">
+    <button id="appearance-toggle" type="button" aria-label="外观设置" title="外观设置" aria-haspopup="dialog" aria-controls="appearance-dialog">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3" fill="var(--surface)"/><circle cx="15" cy="17" r="3" fill="var(--surface)"/></svg>
+    </button>
+    <button id="wallpaper-prev" type="button" aria-label="上一张背景" title="上一张背景">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+        stroke-linejoin="round" aria-hidden="true">
+        <path d="m14.5 5.5-6.5 6.5 6.5 6.5" />
+      </svg>
+    </button>
+    <button id="wallpaper-play" type="button" aria-label="暂停自动切换" aria-pressed="true" title="暂停自动切换">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path id="playback-shape" d="M6 5h4v14H6zM14 5h4v14h-4z" />
+      </svg>
+    </button>
+    <button id="wallpaper-next" type="button" aria-label="下一张背景" title="下一张背景">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+        stroke-linejoin="round" aria-hidden="true">
+        <path d="m9.5 5.5 6.5 6.5-6.5 6.5" />
+      </svg>
+    </button>
+    <button id="wallpaper-visibility" type="button" aria-label="隐藏页面内容" aria-pressed="false" title="隐藏页面内容">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+        stroke-linejoin="round" aria-hidden="true">
+        <path d="M2.5 12s3.5-5.5 9.5-5.5 9.5 5.5 9.5 5.5-3.5 5.5-9.5 5.5S2.5 12 2.5 12Z" />
+        <circle cx="12" cy="12" r="2.5" />
+        <path id="visibility-slash" d="m3 21 18-18" />
+      </svg>
+    </button>
+  </div>
+
+  <dialog id="link-dialog" class="link-dialog" aria-labelledby="link-dialog-title">
+    <form id="link-form">
+      <h2 id="link-dialog-title">添加链接</h2>
+      <label for="link-name-input">名称</label>
+      <input id="link-name-input" name="name" type="text" maxlength="32" required autocomplete="off">
+      <label for="link-url-input">网址</label>
+      <input id="link-url-input" name="url" type="text" inputmode="url" placeholder="https://example.com" required autocomplete="off">
+      <div class="svg-field-head">
+        <label for="link-svg-input">SVG 代码（可选）</label>
+        <span class="svg-preview" aria-hidden="true"><img id="link-svg-preview" alt=""></span>
+      </div>
+      <textarea id="link-svg-input" name="svg" maxlength="1000000" spellcheck="false"></textarea>
+      <p id="link-status" class="dialog-status" role="status" hidden></p>
+      <div class="dialog-actions">
+        <button id="link-delete" class="delete" type="button" hidden>删除</button>
+        <button id="link-cancel" type="button">取消</button>
+        <button class="primary" type="submit">保存</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="appearance-dialog" class="appearance-dialog" aria-labelledby="appearance-title">
+    <div class="appearance-head">
+      <h2 id="appearance-title">外观设置</h2>
+      <button id="appearance-reset" type="button">恢复默认</button>
+    </div>
+    <label for="surface-transparency">透明度 <output id="transparency-value" for="surface-transparency">80%</output></label>
+    <input id="surface-transparency" type="range" min="0" max="100" value="80">
+    <label for="surface-blur">模糊度 <output id="blur-value" for="surface-blur">5px</output></label>
+    <input id="surface-blur" type="range" min="0" max="40" value="5">
+    <div class="appearance-colors">
+      <label for="surface-color">填充色 <input id="surface-color" type="color" value="#131922"></label>
+      <label for="border-color">线条色 <input id="border-color" type="color" value="#ebf2ff"></label>
+    </div>
+    <label for="theme-auto" class="auto-theme-label">跟随壁纸取色 <input id="theme-auto" type="checkbox"></label>
+  </dialog>
+
+  <script src="wallpapers.js"></script>
+  <script>
+    (() => {
+      const input = document.getElementById("query");
+
+      function initSearchFocus() {
+        const search = document.getElementById("search-form");
+        function updateSearchDimMask() {
+          const rect = search.getBoundingClientRect();
+          const { left, top, right, bottom, width, height } = rect;
+          const radius = Math.min(parseFloat(getComputedStyle(search).borderTopLeftRadius) || 0, width / 2, height / 2);
+          const viewportWidth = document.documentElement.clientWidth;
+          const viewportHeight = window.innerHeight;
+          // Exclude the rounded search area so its transparent fill cannot sample the dimmer.
+          const outline = `M0 0H${viewportWidth}V${viewportHeight}H0Z`;
+          const hole = [
+            `M${left + radius} ${top}H${right - radius}`,
+            `A${radius} ${radius} 0 0 1 ${right} ${top + radius}V${bottom - radius}`,
+            `A${radius} ${radius} 0 0 1 ${right - radius} ${bottom}H${left + radius}`,
+            `A${radius} ${radius} 0 0 1 ${left} ${bottom - radius}V${top + radius}`,
+            `A${radius} ${radius} 0 0 1 ${left + radius} ${top}Z`
+          ].join(" ");
+          document.body.style.setProperty("--search-dim-mask", `path(evenodd, "${outline} ${hole}")`);
+        }
+        input.addEventListener("focus", () => {
+          updateSearchDimMask();
+          document.body.classList.add("search-focused");
+        });
+        window.addEventListener("resize", updateSearchDimMask);
+        window.addEventListener("scroll", updateSearchDimMask, { passive: true });
+        new ResizeObserver(updateSearchDimMask).observe(document.querySelector("main"));
+        input.addEventListener("blur", () => document.body.classList.remove("search-focused"));
+      }
+
+      function initSearch() {
+        const engines = {
+          bing: { name: "Bing", action: "https://www.bing.com/search", param: "q" },
+          google: { name: "Google", action: "https://www.google.com/search", param: "q" },
+          baidu: { name: "百度", action: "https://www.baidu.com/s", param: "wd" }
+        };
+        const form = document.getElementById("search-form");
+        const buttons = [...document.querySelectorAll("[data-engine]")];
+        let selected = "bing";
+        const engineToggle = document.getElementById("engine-toggle");
+        const engineMenu = document.getElementById("engine-menu");
+        const engineLogo = document.getElementById("engine-logo");
+        const engineLogos = {
+          "bing": "<svg height=\"1em\" style=\"flex:none;line-height:1\" viewBox=\"0 0 24 24\" width=\"1em\" xmlns=\"http://www.w3.org/2000/svg\"><title>Bing<\/title><path d=\"M11.97 7.569a.92.92 0 00-.805.863c-.013.195-.01.209.43 1.347 1 2.59 1.242 3.214 1.283 3.302.099.213.237.413.41.592.134.138.222.212.37.311.26.176.39.224 1.405.527.989.295 1.529.49 1.994.723.603.302 1.024.644 1.29 1.051.191.292.36.815.434 1.342.029.206.029.661 0 .847a2.491 2.491 0 01-.376 1.026c-.1.151-.065.126.081-.058.415-.52.838-1.408 1.054-2.213a6.728 6.728 0 00.102-3.012 6.626 6.626 0 00-3.291-4.53 104.157 104.157 0 00-1.322-.698l-.254-.133a737.941 737.941 0 01-1.575-.827c-.548-.29-.78-.406-.846-.426a1.376 1.376 0 00-.29-.045l-.093.01z\" fill=\"url(#lobe-icons-bing-0-_R_0_)\"><\/path><path d=\"M13.164 17.24a4.385 4.385 0 00-.202.125 511.45 511.45 0 00-1.795 1.115 163.087 163.087 0 01-.989.614l-.463.288a99.198 99.198 0 01-1.502.941c-.326.2-.704.334-1.09.387-.18.024-.52.024-.7 0a2.807 2.807 0 01-1.318-.538 3.665 3.665 0 01-.543-.545 2.837 2.837 0 01-.506-1.141 2.161 2.161 0 00-.041-.182c-.008-.008.006.138.032.33.027.199.085.487.147.733.482 1.907 1.85 3.457 3.705 4.195a6.31 6.31 0 001.658.412c.22.025.844.035 1.074.017 1.054-.08 1.972-.393 2.913-.992a325.28 325.28 0 01.937-.596l.384-.244.684-.435.234-.149.009-.005.025-.017.013-.007.172-.11.597-.38c.76-.481.987-.65 1.34-.998.148-.146.37-.394.381-.425.002-.007.042-.068.088-.136a2.49 2.49 0 00.373-1.023 4.181 4.181 0 000-.847 4.336 4.336 0 00-.318-1.137c-.224-.472-.7-.9-1.383-1.245a2.972 2.972 0 00-.406-.181c-.01 0-.646.392-1.413.87a7089.171 7089.171 0 00-1.658 1.031l-.439.274z\" fill=\"url(#lobe-icons-bing-1-_R_0_)\" fill-rule=\"nonzero\"><\/path><path d=\"M4.003 14.946l.004 3.33.042.193c.134.604.366 1.04.77 1.445a2.701 2.701 0 001.955.814c.536 0 1-.135 1.479-.43l.703-.435.556-.346V8.003c0-2.306-.004-3.675-.012-3.782a2.734 2.734 0 00-.797-1.765c-.145-.144-.268-.24-.637-.496A1780.102 1780.102 0 015.762.362C5.406.115 5.38.098 5.271.059a.943.943 0 00-1.254.696C4.003.818 4 1.659 4 6.223v5.394H4l.003 3.329z\" fill=\"url(#lobe-icons-bing-2-_R_0_)\" fill-rule=\"nonzero\"><\/path><defs><radialGradient cx=\"93.717%\" cy=\"77.818%\" fx=\"93.717%\" fy=\"77.818%\" gradientTransform=\"scale(-1 -.7146) rotate(49.288 2.035 -2.198)\" id=\"lobe-icons-bing-0-_R_0_\" r=\"143.691%\"><stop offset=\"0%\" stop-color=\"#00CACC\"><\/stop><stop offset=\"100%\" stop-color=\"#048FCE\"><\/stop><\/radialGradient><radialGradient cx=\"13.893%\" cy=\"71.448%\" fx=\"13.893%\" fy=\"71.448%\" gradientTransform=\"scale(.6042 1) rotate(-23.34 .184 .494)\" id=\"lobe-icons-bing-1-_R_0_\" r=\"149.21%\"><stop offset=\"0%\" stop-color=\"#00BBEC\"><\/stop><stop offset=\"100%\" stop-color=\"#2756A9\"><\/stop><\/radialGradient><linearGradient id=\"lobe-icons-bing-2-_R_0_\" x1=\"50%\" x2=\"50%\" y1=\"0%\" y2=\"100%\"><stop offset=\"0%\" stop-color=\"#00BBEC\"><\/stop><stop offset=\"100%\" stop-color=\"#2756A9\"><\/stop><\/linearGradient><\/defs><\/svg>",
+          "google": "<svg height=\"1em\" style=\"flex:none;line-height:1\" viewBox=\"0 0 24 24\" width=\"1em\" xmlns=\"http://www.w3.org/2000/svg\"><title>Google<\/title><path d=\"M23 12.245c0-.905-.075-1.565-.236-2.25h-10.54v4.083h6.186c-.124 1.014-.797 2.542-2.294 3.569l-.021.136 3.332 2.53.23.022C21.779 18.417 23 15.593 23 12.245z\" fill=\"#4285F4\"><\/path><path d=\"M12.225 23c3.03 0 5.574-.978 7.433-2.665l-3.542-2.688c-.948.648-2.22 1.1-3.891 1.1a6.745 6.745 0 01-6.386-4.572l-.132.011-3.465 2.628-.045.124C4.043 20.531 7.835 23 12.225 23z\" fill=\"#34A853\"><\/path><path d=\"M5.84 14.175A6.65 6.65 0 015.463 12c0-.758.138-1.491.361-2.175l-.006-.147-3.508-2.67-.115.054A10.831 10.831 0 001 12c0 1.772.436 3.447 1.197 4.938l3.642-2.763z\" fill=\"#FBBC05\"><\/path><path d=\"M12.225 5.253c2.108 0 3.529.892 4.34 1.638l3.167-3.031C17.787 2.088 15.255 1 12.225 1 7.834 1 4.043 3.469 2.197 7.062l3.63 2.763a6.77 6.77 0 016.398-4.572z\" fill=\"#EB4335\"><\/path><\/svg>",
+          "baidu": "<svg height=\"1em\" style=\"flex:none;line-height:1\" viewBox=\"0 0 24 24\" width=\"1em\" xmlns=\"http://www.w3.org/2000/svg\"><title>Baidu<\/title><path d=\"M8.859 11.735c1.017-1.71 4.059-3.083 6.202.286 1.579 2.284 4.284 4.397 4.284 4.397s2.027 1.601.73 4.684c-1.24 2.956-5.64 1.607-6.005 1.49l-.024-.009s-1.746-.568-3.776-.112c-2.026.458-3.773.286-3.773.286l-.045-.001c-.328-.01-2.38-.187-3.001-2.968-.675-3.028 2.365-4.687 2.592-4.968.226-.288 1.802-1.37 2.816-3.085zm.986 1.738v2.032h-1.64s-1.64.138-2.213 2.014c-.2 1.252.177 1.99.242 2.148.067.157.596 1.073 1.927 1.342h3.078v-7.514l-1.394-.022zm3.588 2.191l-1.44.024v3.956s.064.985 1.44 1.344h3.541v-5.3h-1.528v3.979h-1.46s-.466-.068-.553-.447v-3.556zM9.82 16.715v3.06H8.58s-.863-.045-1.126-1.049c-.136-.445.02-.959.088-1.16.063-.203.353-.671.951-.85H9.82zm9.525-9.036c2.086 0 2.646 2.06 2.646 2.742 0 .688.284 3.597-2.309 3.655-2.595.057-2.704-1.77-2.704-3.08 0-1.374.277-3.317 2.367-3.317zM4.24 6.08c1.523-.135 2.645 1.55 2.762 2.513.07.625.393 3.486-1.975 4-2.364.515-3.244-2.249-2.984-3.544 0 0 .28-2.797 2.197-2.969zm8.847-1.483c.14-1.31 1.69-3.316 2.931-3.028 1.236.285 2.367 1.944 2.137 3.37-.224 1.428-1.345 3.313-3.095 3.082-1.748-.226-2.143-1.823-1.973-3.424zM9.425 1c1.307 0 2.364 1.519 2.364 3.398 0 1.879-1.057 3.4-2.364 3.4s-2.367-1.521-2.367-3.4C7.058 2.518 8.118 1 9.425 1z\" fill=\"#2932E1\" fill-rule=\"nonzero\"><\/path><\/svg>"
+        };
+        buttons.forEach(button => {
+          const mark = document.createElement("span");
+          mark.className = "engine-brand";
+          mark.setAttribute("aria-hidden", "true");
+          mark.innerHTML = engineLogos[button.dataset.engine];
+          button.prepend(mark);
+        });
+        function setEngineMenu(open, focusOption = false) {
+          engineMenu.hidden = !open;
+          engineToggle.setAttribute("aria-expanded", String(open));
+          if (open && focusOption) buttons.find(button => button.dataset.engine === selected).focus();
+        }
+        engineToggle.addEventListener("click", () => setEngineMenu(engineMenu.hidden, true));
+        engineToggle.addEventListener("keydown", event => {
+          if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+            event.preventDefault();
+            setEngineMenu(true, true);
+          }
+        });
+        document.addEventListener("click", event => {
+          if (!event.target.closest(".engine-picker")) setEngineMenu(false);
+        });
+        document.addEventListener("focusin", event => {
+          if (!event.target.closest(".engine-picker")) setEngineMenu(false);
+        });
+        engineMenu.addEventListener("keydown", event => {
+          const index = buttons.indexOf(document.activeElement);
+          if (["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) {
+            event.preventDefault();
+            const next = event.key === "Home" ? 0 : event.key === "End" ? buttons.length - 1
+              : (index + (event.key === "ArrowDown" ? 1 : -1) + buttons.length) % buttons.length;
+            buttons[next].focus();
+          }
+        });
+        document.querySelector(".engine-picker").addEventListener("keydown", event => {
+          if (event.key === "Escape" && !engineMenu.hidden) {
+            event.preventDefault();
+            event.stopPropagation();
+            setEngineMenu(false);
+            engineToggle.focus();
+          }
+        });
+
+        try {
+          const saved = localStorage.getItem("startpage-engine");
+          if (saved && Object.hasOwn(engines, saved)) selected = saved;
+        } catch (_) { }
+
+        function selectEngine(name) {
+          if (!Object.hasOwn(engines, name)) return;
+          selected = name;
+          engineLogo.innerHTML = engineLogos[name];
+          const label = engines[name].name + " · 切换搜索引擎";
+          engineToggle.setAttribute("aria-label", label);
+          engineToggle.title = label;
+          buttons.forEach(button => {
+            button.setAttribute("aria-pressed", String(button.dataset.engine === name));
+          });
+          try { localStorage.setItem("startpage-engine", name); } catch (_) { }
+        }
+
+        buttons.forEach(button => {
+          button.addEventListener("click", () => {
+            selectEngine(button.dataset.engine);
+            setEngineMenu(false);
+            input.focus();
+          });
+        });
+
+        form.addEventListener("submit", event => {
+          event.preventDefault();
+          const term = input.value.trim();
+          if (!term) {
+            input.focus();
+            return;
+          }
+          const engine = engines[selected];
+          const url = new URL(engine.action);
+          url.searchParams.set(engine.param, term);
+          window.location.href = url.toString();
+        });
+
+        selectEngine(selected);
+      }
+
+      function initQuickLinks() {
+        const quickLinks = document.querySelector(".links");
+        const addLinkButton = document.getElementById("add-link");
+        const linkDialog = document.getElementById("link-dialog");
+        const linkForm = document.getElementById("link-form");
+        const linkDialogTitle = document.getElementById("link-dialog-title");
+        const linkNameInput = document.getElementById("link-name-input");
+        const linkUrlInput = document.getElementById("link-url-input");
+        const linkSvgInput = document.getElementById("link-svg-input");
+        const linkSvgPreview = document.getElementById("link-svg-preview");
+        const linkStatus = document.getElementById("link-status");
+        const deleteLinkButton = document.getElementById("link-delete");
+        const linksKey = "startpage-links";
+        const legacyLinksKey = "startpage-custom-links";
+        const defaultLinkSvg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13.5a4 4 0 0 0 5.7 0l3.1-3.1a4 4 0 0 0-5.7-5.7l-1.8 1.8"/><path d="M14 10.5a4 4 0 0 0-5.7 0l-3.1 3.1a4 4 0 0 0 5.7 5.7l1.8-1.8"/></svg>';
+        let links = [];
+        let editingLinkIndex = -1;
+        let dialogOpener = null;
+        let heldLink = null;
+        let suppressLinkClickUntil = 0;
+
+        function validLinkUrl(value) {
+          const raw = value.trim();
+          if (!raw || (raw.includes("://") && !/^https?:\/\//i.test(raw))) return null;
+          try {
+            const url = new URL(/^https?:\/\//i.test(raw) ? raw : "https://" + raw);
+            if (!["http:", "https:"].includes(url.protocol) || !url.hostname || url.username || url.password) return null;
+            return url.href;
+          } catch (_) {
+            return null;
+          }
+        }
+
+        function validSvg(value) {
+          const raw = typeof value === "string" ? value.trim() : "";
+          if (!raw) return defaultLinkSvg;
+          if (raw.length > 1000000) return null;
+          const svg = /<svg\b[^>]*\bxmlns\s*=/i.test(raw)
+            ? raw : raw.replace(/<svg\b/i, '<svg xmlns="http://www.w3.org/2000/svg"');
+          const parsed = new DOMParser().parseFromString(svg, "image/svg+xml");
+          if (parsed.documentElement.localName !== "svg" ||
+            parsed.documentElement.namespaceURI !== "http://www.w3.org/2000/svg" ||
+            parsed.getElementsByTagName("parsererror").length) return null;
+          return svg;
+        }
+
+        function svgImageUrl(svg) {
+          return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg.replace(/\bcurrentColor\b/g, "#cbd4e4"));
+        }
+
+        function normalizedLink(item) {
+          if (!item || typeof item.name !== "string" || typeof item.href !== "string") return null;
+          const name = item.name.trim().slice(0, 32);
+          const href = validLinkUrl(item.href);
+          const svg = validSvg(item.svg);
+          return name && href ? { name, href, svg: svg || defaultLinkSvg } : null;
+        }
+
+        function readLinks() {
+          try {
+            const saved = localStorage.getItem(linksKey);
+            if (saved !== null) {
+              const data = JSON.parse(saved);
+              return Array.isArray(data) ? data.map(normalizedLink).filter(Boolean) : [];
+            }
+            const legacy = JSON.parse(localStorage.getItem(legacyLinksKey) || "[]");
+            const oldLinks = Array.isArray(legacy) ? legacy.map(normalizedLink).filter(Boolean) : [];
+            return oldLinks;
+          } catch (_) {
+            return [];
+          }
+        }
+
+        function renderLinks() {
+          quickLinks.querySelectorAll(".link-entry").forEach(card => card.remove());
+          links.forEach((item, index) => {
+            const wrapper = document.createElement("div");
+            wrapper.className = "link-entry";
+            wrapper.dataset.index = String(index);
+            const link = document.createElement("a");
+            link.className = "link-card";
+            link.href = item.href;
+            link.target = "_blank";
+            link.rel = "noopener noreferrer";
+            link.title = item.name;
+            const icon = document.createElement("span");
+            icon.className = "icon-box";
+            icon.setAttribute("aria-hidden", "true");
+            const image = document.createElement("img");
+            image.alt = "";
+            image.src = svgImageUrl(item.svg);
+            icon.append(image);
+            const name = document.createElement("span");
+            name.className = "link-name";
+            name.textContent = item.name;
+            link.append(icon, name);
+            link.addEventListener("pointerdown", event => holdLink(event, wrapper));
+            link.addEventListener("dragstart", event => event.preventDefault());
+            const edit = document.createElement("button");
+            edit.className = "link-edit";
+            edit.type = "button";
+            edit.setAttribute("aria-label", "编辑 " + item.name);
+            edit.title = "编辑 " + item.name;
+            edit.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4l11-11a2 2 0 0 0-4-4L4 16v4Z"/><path d="m13.5 6.5 4 4"/></svg>';
+            edit.addEventListener("click", () => openLinkDialog(index, edit));
+            wrapper.append(link, edit);
+            quickLinks.append(wrapper);
+          });
+          quickLinks.append(addLinkButton);
+        }
+
+        function holdLink(event, wrapper) {
+          if (heldLink || (event.pointerType === "mouse" && event.button !== 0)) return;
+          const state = {
+            pointerId: event.pointerId,
+            wrapper,
+            startX: event.clientX,
+            startY: event.clientY,
+            active: false,
+            ghost: null,
+            timer: null
+          };
+          heldLink = state;
+          state.timer = setTimeout(() => {
+            if (heldLink !== state) return;
+            const rect = wrapper.getBoundingClientRect();
+            state.offsetX = state.startX - rect.left;
+            state.offsetY = state.startY - rect.top;
+            state.ghost = wrapper.querySelector(".link-card").cloneNode(true);
+            state.ghost.classList.add("link-drag-ghost");
+            state.ghost.style.width = rect.width + "px";
+            state.ghost.style.height = rect.height + "px";
+            state.ghost.style.left = rect.left + "px";
+            state.ghost.style.top = rect.top + "px";
+            document.body.append(state.ghost);
+            wrapper.classList.add("is-dragging");
+            document.body.classList.add("is-link-dragging");
+            state.active = true;
+            input.blur();
+            state.lastSwap = 0;
+          }, 420);
+          document.addEventListener("pointermove", moveHeldLink, { passive: false });
+          document.addEventListener("pointerup", dropHeldLink);
+          document.addEventListener("pointercancel", cancelHeldLink);
+          window.addEventListener("blur", cancelHeldLink);
+        }
+
+        function moveHeldLink(event) {
+          const state = heldLink;
+          if (!state || event.pointerId !== state.pointerId) return;
+          if (!state.active) {
+            if (Math.hypot(event.clientX - state.startX, event.clientY - state.startY) > 9) finishHeldLink(false);
+            return;
+          }
+          event.preventDefault();
+          state.ghost.style.left = event.clientX - state.offsetX + "px";
+          state.ghost.style.top = event.clientY - state.offsetY + "px";
+          const target = document.elementFromPoint(event.clientX, event.clientY)?.closest(".link-entry");
+          if (!target || target.parentElement !== quickLinks || target === state.wrapper) return;
+          const now = performance.now();
+          if (now - state.lastSwap < 180) return;
+          const bounds = target.getBoundingClientRect();
+          const inset = Math.min(bounds.width, bounds.height) * .15;
+          if (event.clientX < bounds.left + inset || event.clientX > bounds.right - inset ||
+              event.clientY < bounds.top + inset || event.clientY > bounds.bottom - inset) return;
+          const entries = [...quickLinks.querySelectorAll(".link-entry")];
+          const positions = new Map(entries.map(entry => [entry, { x: entry.offsetLeft, y: entry.offsetTop }]));
+          entries.forEach(entry => entry.getAnimations().forEach(animation => animation.cancel()));
+          if (entries.indexOf(state.wrapper) < entries.indexOf(target)) target.after(state.wrapper);
+          else quickLinks.insertBefore(state.wrapper, target);
+          state.lastSwap = now;
+          if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+          entries.forEach(entry => {
+            if (entry === state.wrapper) return;
+            const before = positions.get(entry);
+            const x = before.x - entry.offsetLeft;
+            const y = before.y - entry.offsetTop;
+            if (x || y) entry.animate([
+              { transform: `translate(${x}px, ${y}px)` },
+              { transform: "translate(0, 0)" }
+            ], { duration: 180, easing: "cubic-bezier(.22, 1, .36, 1)" });
+          });
+        }
+
+        function finishHeldLink(commit) {
+          const state = heldLink;
+          if (!state) return;
+          heldLink = null;
+          clearTimeout(state.timer);
+          document.removeEventListener("pointermove", moveHeldLink);
+          document.removeEventListener("pointerup", dropHeldLink);
+          document.removeEventListener("pointercancel", cancelHeldLink);
+          window.removeEventListener("blur", cancelHeldLink);
+          if (!state.active) return;
+          suppressLinkClickUntil = performance.now() + 800;
+          const originalIndex = Number(state.wrapper.dataset.index);
+          let destinationIndex = originalIndex;
+          state.wrapper.classList.remove("is-dragging");
+          document.body.classList.remove("is-link-dragging");
+          if (commit) {
+            const reordered = [...quickLinks.querySelectorAll(".link-entry")]
+              .map(entry => links[Number(entry.dataset.index)]);
+            try {
+              localStorage.setItem(linksKey, JSON.stringify(reordered));
+              destinationIndex = [...quickLinks.querySelectorAll(".link-entry")].indexOf(state.wrapper);
+              links = reordered;
+            } catch (error) {
+              console.error("保存快捷链接顺序失败", error);
+            }
+          }
+          renderLinks();
+          const destination = quickLinks.querySelectorAll(".link-entry")[destinationIndex];
+          if (!commit || !destination || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+            state.ghost.remove();
+            return;
+          }
+          const targetRect = destination.getBoundingClientRect();
+          destination.style.visibility = "hidden";
+          const landing = state.ghost.animate([
+            { transform: "scale(1.025)" },
+            { transform: `translate(${targetRect.left - parseFloat(state.ghost.style.left)}px, ${targetRect.top - parseFloat(state.ghost.style.top)}px) scale(1)` }
+          ], { duration: 180, easing: "cubic-bezier(.22, 1, .36, 1)", fill: "forwards" });
+          landing.finished.catch(() => {}).finally(() => {
+            destination.style.visibility = "";
+            state.ghost.remove();
+          });
+        }
+
+        function dropHeldLink(event) {
+          if (heldLink && event.pointerId === heldLink.pointerId) finishHeldLink(true);
+        }
+
+        function cancelHeldLink(event) {
+          if (heldLink && (event.pointerId === undefined || event.pointerId === heldLink.pointerId)) finishHeldLink(false);
+        }
+
+        function updateSvgPreview() {
+          const svg = validSvg(linkSvgInput.value);
+          if (svg) linkSvgPreview.src = svgImageUrl(svg);
+          else linkSvgPreview.removeAttribute("src");
+        }
+
+        function openLinkDialog(index, opener) {
+          editingLinkIndex = index;
+          dialogOpener = opener;
+          linkDialogTitle.textContent = index < 0 ? "添加链接" : "编辑链接";
+          deleteLinkButton.hidden = index < 0;
+          linkNameInput.value = index < 0 ? "" : links[index].name;
+          linkUrlInput.value = index < 0 ? "" : links[index].href;
+          linkSvgInput.value = index < 0 ? "" : links[index].svg;
+          linkNameInput.setCustomValidity("");
+          linkUrlInput.setCustomValidity("");
+          linkSvgInput.setCustomValidity("");
+          linkStatus.hidden = true;
+          updateSvgPreview();
+          linkDialog.showModal();
+          linkNameInput.focus();
+        }
+
+        function saveLinks(next) {
+          try {
+            localStorage.setItem(linksKey, JSON.stringify(next));
+          } catch (_) {
+            linkStatus.textContent = "浏览器未能保存链接，请检查本地存储权限。";
+            linkStatus.hidden = false;
+            return;
+          }
+          links = next;
+          renderLinks();
+          const cards = quickLinks.querySelectorAll(".link-entry .link-card");
+          const focusIndex = editingLinkIndex < 0 ? cards.length - 1 : Math.min(editingLinkIndex, cards.length - 1);
+          dialogOpener = cards[focusIndex] || input;
+          linkDialog.close();
+        }
+
+        links = readLinks();
+        renderLinks();
+        quickLinks.addEventListener("click", event => {
+          if (performance.now() < suppressLinkClickUntil && event.target.closest(".link-card")) {
+            event.preventDefault();
+            event.stopPropagation();
+          }
+        }, true);
+        quickLinks.addEventListener("contextmenu", event => {
+          if (heldLink?.active && event.target.closest(".link-card")) event.preventDefault();
+        });
+        addLinkButton.addEventListener("click", () => openLinkDialog(-1, addLinkButton));
+        document.getElementById("link-cancel").addEventListener("click", () => linkDialog.close());
+        linkDialog.addEventListener("close", () => {
+          if (dialogOpener?.isConnected) dialogOpener.focus({ preventScroll: true });
+          else input.focus({ preventScroll: true });
+        });
+        linkNameInput.addEventListener("input", () => linkNameInput.setCustomValidity(""));
+        linkUrlInput.addEventListener("input", () => {
+          linkUrlInput.setCustomValidity("");
+          linkStatus.hidden = true;
+        });
+        linkSvgInput.addEventListener("input", () => {
+          linkSvgInput.setCustomValidity("");
+          linkStatus.hidden = true;
+          updateSvgPreview();
+        });
+        linkForm.addEventListener("submit", event => {
+          event.preventDefault();
+          const name = linkNameInput.value.trim();
+          const href = validLinkUrl(linkUrlInput.value);
+          const svg = validSvg(linkSvgInput.value);
+          if (!name) {
+            linkNameInput.setCustomValidity("请输入名称");
+            linkNameInput.reportValidity();
+            return;
+          }
+          if (!href) {
+            linkUrlInput.setCustomValidity("请输入有效的 http 或 https 网址");
+            linkUrlInput.reportValidity();
+            return;
+          }
+          if (!svg) {
+            linkSvgInput.setCustomValidity("请输入完整有效的 SVG 代码");
+            linkSvgInput.reportValidity();
+            return;
+          }
+          const next = [...links];
+          if (editingLinkIndex < 0) next.push({ name, href, svg });
+          else next[editingLinkIndex] = { name, href, svg };
+          saveLinks(next);
+        });
+        deleteLinkButton.addEventListener("click", () => {
+          if (editingLinkIndex < 0) return;
+          saveLinks(links.filter((_, index) => index !== editingLinkIndex));
+        });
+        window.addEventListener("storage", event => {
+          if (event.key !== linksKey) return;
+          finishHeldLink(false);
+          links = readLinks();
+          renderLinks();
+          if (linkDialog.open) linkDialog.close();
+        });
+      }
+
+      function initWallpapers(onWallpaper) {
+        const wallpapers = window.STARTPAGE_WALLPAPERS || [];
+        const wallpaperLayers = [...document.querySelectorAll(".wallpaper")];
+        const wallpaperRoot = document.getElementById("wallpapers");
+        const previousButton = document.getElementById("wallpaper-prev");
+        const nextButton = document.getElementById("wallpaper-next");
+        const playButton = document.getElementById("wallpaper-play");
+        const visibilityButton = document.getElementById("wallpaper-visibility");
+        const visibilitySlash = document.getElementById("visibility-slash");
+        const page = document.querySelector(".page");
+        const playbackShape = document.getElementById("playback-shape");
+        const pausePath = "M6 5h4v14H6zM14 5h4v14h-4z";
+        const playPath = "M7 4.8a1 1 0 0 1 1.53-.85l10.5 7.2a1 1 0 0 1 0 1.7l-10.5 7.2A1 1 0 0 1 7 19.2V4.8Z";
+        const intervalMs = 30_000;
+        let wallpaperIndex = 0;
+        let requestedIndex = 0;
+        let activeLayer = 0;
+        let requestId = 0;
+        let timer = null;
+        let playing = true;
+        let pendingAutomatic = false;
+        let hasWallpaper = false;
+        try {
+          const savedKey = localStorage.getItem("startpage-wallpaper-key");
+          const keyIndex = wallpapers.findIndex(item => item.key === savedKey);
+          const savedIndex = Number(localStorage.getItem("startpage-wallpaper-index"));
+          if (keyIndex >= 0) {
+            wallpaperIndex = keyIndex;
+          } else if (Number.isInteger(savedIndex) && savedIndex >= 0 && savedIndex < wallpapers.length) {
+            wallpaperIndex = savedIndex;
+          }
+          const savedPlaying = localStorage.getItem("startpage-wallpaper-playing");
+          if (savedPlaying !== null) playing = savedPlaying === "true";
+        } catch (_) { }
+        requestedIndex = wallpaperIndex;
+
+        function showWallpaper(index, automatic = false) {
+          if (!wallpapers.length) return;
+          requestedIndex = (index + wallpapers.length) % wallpapers.length;
+          const item = wallpapers[requestedIndex];
+          const currentRequest = ++requestId;
+          pendingAutomatic = automatic;
+
+          const image = new Image();
+          image.onload = () => {
+            if (currentRequest !== requestId) return;
+            if (automatic && !playing) {
+              requestedIndex = wallpaperIndex;
+              pendingAutomatic = false;
+              return;
+            }
+            const nextLayer = 1 - activeLayer;
+            const lowerShade = item.shade;
+            const upperShade = Math.min(item.shade + .09, .75);
+            wallpaperLayers[nextLayer].style.backgroundImage =
+              `linear-gradient(rgba(7, 11, 17, ${lowerShade}), rgba(7, 11, 17, ${upperShade})), url("${item.source}")`;
+            wallpaperLayers[nextLayer].classList.add("is-visible");
+            wallpaperLayers[activeLayer].classList.remove("is-visible");
+            activeLayer = nextLayer;
+            wallpaperIndex = requestedIndex;
+            pendingAutomatic = false;
+            hasWallpaper = true;
+            onWallpaper(item.theme);
+            try {
+              localStorage.setItem("startpage-wallpaper-index", String(wallpaperIndex));
+              localStorage.setItem("startpage-wallpaper-key", item.key);
+            } catch (_) { }
+          };
+          image.onerror = () => {
+            if (currentRequest !== requestId) return;
+            pendingAutomatic = false;
+          };
+          image.src = item.source;
+        }
+
+        function restartTimer() {
+          if (timer !== null) clearTimeout(timer);
+          timer = null;
+          if (!playing || wallpapers.length < 2) return;
+          timer = setTimeout(() => {
+            timer = null;
+            if (!playing) return;
+            showWallpaper(requestedIndex + 1, true);
+            restartTimer();
+          }, intervalMs);
+        }
+
+        function updatePlayback() {
+          const canSwitch = wallpapers.length > 1;
+          previousButton.disabled = !canSwitch;
+          nextButton.disabled = !canSwitch;
+          playButton.disabled = !canSwitch;
+          playbackShape.setAttribute("d", playing ? pausePath : playPath);
+          playButton.setAttribute("aria-pressed", String(playing));
+          const label = playing ? "暂停自动切换" : "开始自动切换";
+          playButton.setAttribute("aria-label", label);
+          playButton.title = label;
+          try { localStorage.setItem("startpage-wallpaper-playing", String(playing)); } catch (_) { }
+          restartTimer();
+        }
+
+        previousButton.addEventListener("click", () => {
+          showWallpaper(requestedIndex - 1);
+          restartTimer();
+        });
+        nextButton.addEventListener("click", () => {
+          showWallpaper(requestedIndex + 1);
+          restartTimer();
+        });
+        playButton.addEventListener("click", () => {
+          playing = !playing;
+          if (!playing && hasWallpaper) {
+            if (pendingAutomatic) {
+              requestId++; // Cancel only an automatic image load.
+              requestedIndex = wallpaperIndex;
+              pendingAutomatic = false;
+            }
+            // Finish the current fade when pausing, then restore it for manual navigation.
+            wallpaperLayers.forEach(layer => { layer.style.transition = "none"; });
+            void wallpaperRoot.offsetWidth;
+            wallpaperLayers.forEach(layer => { layer.style.transition = ""; });
+          }
+          updatePlayback();
+        });
+        visibilityButton.addEventListener("click", event => {
+          const immersive = document.body.classList.toggle("is-immersive");
+          if (immersive) input.blur();
+          if (immersive && event.detail > 0) visibilityButton.blur();
+          page.inert = immersive;
+          visibilitySlash.style.display = immersive ? "none" : "";
+          visibilityButton.setAttribute("aria-pressed", String(immersive));
+          const label = immersive ? "显示页面内容" : "隐藏页面内容";
+          visibilityButton.setAttribute("aria-label", label);
+          visibilityButton.title = label;
+        });
+
+        showWallpaper(wallpaperIndex);
+        updatePlayback();
+      }
+
+      function initAppearance() {
+        const dialog = document.getElementById("appearance-dialog");
+        const toggle = document.getElementById("appearance-toggle");
+        const transparency = document.getElementById("surface-transparency");
+        const blur = document.getElementById("surface-blur");
+        const fill = document.getElementById("surface-color");
+        const border = document.getElementById("border-color");
+        const defaults = { transparency: 80, blur: 5, fill: "#131922", border: "#ebf2ff" };
+        const autoTheme = document.getElementById("theme-auto");
+        let palette = null;
+        let customColors = false;
+        const validColor = value => typeof value === "string" && /^#[0-9a-f]{6}$/i.test(value);
+        const rgb = hex => [1, 3, 5].map(offset => parseInt(hex.slice(offset, offset + 2), 16)).join(", ");
+        const hex = channels => "#" + channels.map(channel => channel.toString(16).padStart(2, "0")).join("");
+        const storageKey = "startpage-appearance";
+        const transparencyValue = document.getElementById("transparency-value");
+        const blurValue = document.getElementById("blur-value");
+
+        function apply(save = false) {
+          const opacity = 1 - Number(transparency.value) / 100;
+          const style = document.documentElement.style;
+          style.setProperty("--surface-opacity", opacity);
+          style.setProperty("--surface-blur", blur.value + "px");
+          if (autoTheme.checked && palette) {
+            fill.value = hex(palette.fill);
+            border.value = hex(palette.border);
+          }
+          if ((autoTheme.checked && palette) || customColors) {
+            style.setProperty("--surface-rgb", rgb(fill.value));
+            style.setProperty("--border-rgb", rgb(border.value));
+          } else {
+            style.removeProperty("--surface-rgb");
+            style.removeProperty("--border-rgb");
+          }
+          transparencyValue.value = transparency.value + "%";
+          blurValue.value = blur.value + "px";
+          if (save) {
+            try {
+              const settings = {
+                transparency: Number(transparency.value),
+                blur: Number(blur.value),
+                fill: fill.value,
+                border: border.value,
+                customColors,
+                autoTheme: autoTheme.checked
+              };
+              localStorage.setItem(storageKey, JSON.stringify(settings));
+            } catch (_) { }
+          }
+        }
+
+        try {
+          const saved = JSON.parse(localStorage.getItem(storageKey));
+          autoTheme.checked = saved?.autoTheme === true;
+          if (saved && Number.isFinite(saved.transparency)) transparency.value = saved.transparency;
+          if (saved && Number.isFinite(saved.blur)) blur.value = saved.blur;
+          if (saved && validColor(saved.fill) && validColor(saved.border)) {
+            fill.value = saved.fill;
+            border.value = saved.border;
+            customColors = saved.customColors === true;
+          }
+        } catch (_) { }
+        apply();
+        [transparency, blur].forEach(slider => slider.addEventListener("input", () => apply(true)));
+        [fill, border].forEach(picker => picker.addEventListener("input", () => {
+          autoTheme.checked = false;
+          customColors = true;
+          apply(true);
+        }));
+        toggle.addEventListener("click", () => dialog.showModal());
+        let pointerStartedOutside = false;
+        function isOutsideDialog(event) {
+          const rect = dialog.getBoundingClientRect();
+          return event.clientX < rect.left || event.clientX > rect.right ||
+            event.clientY < rect.top || event.clientY > rect.bottom;
+        }
+        dialog.addEventListener("pointerdown", event => {
+          pointerStartedOutside = event.target === dialog && isOutsideDialog(event);
+        });
+        dialog.addEventListener("click", event => {
+          if (pointerStartedOutside && event.target === dialog && isOutsideDialog(event)) dialog.close();
+          pointerStartedOutside = false;
+        });
+        document.getElementById("appearance-reset").addEventListener("click", () => {
+          transparency.value = defaults.transparency;
+          blur.value = defaults.blur;
+          fill.value = defaults.fill;
+          border.value = defaults.border;
+          customColors = false;
+          autoTheme.checked = false;
+          apply(true);
+        });
+        dialog.addEventListener("close", () => toggle.focus({ preventScroll: true }));
+
+        function updateWallpaperTheme(theme) {
+          palette = theme;
+          apply();
+        }
+
+        autoTheme.addEventListener("change", () => apply(true));
+        return updateWallpaperTheme;
+      }
+
+      const updateWallpaperTheme = initAppearance();
+      initSearchFocus();
+      initSearch();
+      initQuickLinks();
+      initWallpapers(updateWallpaperTheme);
+      input.focus({ preventScroll: true });
+
+    })();
+  </script>
+</body>
+
+</html>
