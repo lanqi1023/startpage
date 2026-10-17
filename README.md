@@ -1,149 +1,147 @@
 # Startpage
 
-A lightweight, wallpaper-first browser start page built with plain HTML, CSS, and JavaScript. No build step, backend, or account required.
+一个以壁纸为中心的轻量浏览器起始页，使用原生 HTML、CSS 和 JavaScript 构建。无需构建工具、后端服务或账号，支持直接在本地打开。
 
-![Startpage preview](screenshot.jpg)
+![Startpage 页面预览](screenshot.jpg)
 
-*The preview above shows the page. An AI-generated [example wallpaper](wallpapers/example.png) and its [generation prompt](wallpapers/example.prompt.txt) are included in `wallpapers/`.*
+项目附带一张 AI 生成的[示例壁纸](wallpapers/example.png)，[生成提示词](wallpapers/example.prompt.txt)也保存在 `wallpapers/` 中。
 
-## Features
+## 功能
 
-- **Search engines** - Switch between Bing, Google, and Baidu from the search box logo. Press Enter to search.
-- **Quick links** - Add, edit, and delete shortcuts, use custom SVG icons, and reorder cards by dragging.
-- **Wallpaper slideshow** - Browse wallpapers manually or play a slideshow with 30-second intervals.
-- **Appearance controls** - Adjust transparency, background blur, fill color, and border color across panels.
-- **Wallpaper colors** - Follow precomputed wallpaper palettes or adjust either color to switch back to manual styling.
-- **Focused search** - Gently dim surrounding content while keeping the search box bright.
-- **Immersive mode** - Hide the search box and shortcuts to enjoy your wallpaper.
-- **Local preferences** - Keep settings and shortcuts in your browser's local storage.
+- **多引擎搜索**：在 Bing、Google 和百度之间切换，按回车搜索。
+- **快捷链接**：添加、编辑、删除链接，支持自定义 SVG 图标与长按拖动排序。
+- **壁纸轮播**：支持手动切换、自动播放与暂停，默认每 30 秒切换一次。
+- **外观调节**：实时调整透明度、背景模糊、填充色和边线色。
+- **壁纸配色**：跟随预先提取的壁纸主题色，也可随时手动调色。
+- **搜索聚焦**：轻微模糊、压暗周围区域并淡化图标，搜索框保持明亮。
+- **沉浸模式**：隐藏搜索框与快捷链接，专注欣赏壁纸。
+- **本地保存**：设置与快捷链接保存在浏览器本地，无需登录。
 
-## Getting started
+## 快速开始
 
-1. Download the project.
-2. Keep `startpage.html` and `wallpapers.js` in the project root, with images inside `wallpapers/`. Preserve this directory structure.
-3. Open `startpage.html` in a modern browser.
+1. 下载项目。
+2. 保持 `startpage.html` 和 `wallpapers.js` 位于项目根目录，壁纸图片位于 `wallpapers/` 中。
+3. 使用现代浏览器打开 `startpage.html`。
 
-You can set the page as your browser homepage. Replacing the new tab page may require an extension, depending on your browser.
+可以将页面设为浏览器主页。替换新标签页是否需要扩展，取决于浏览器支持。
 
-**Python is only needed to regenerate the wallpaper list and palettes.** The page runs without it.
+**Python 仅用于更新壁纸列表和主题色，打开页面不需要安装 Python。**
 
-Alternatively, serve the directory locally:
+也可以在项目根目录启动本地静态服务：
 
 ```bash
 python -m http.server 8000
 ```
 
-Open [http://localhost:8000/startpage.html](http://localhost:8000/startpage.html).
+然后访问 [http://localhost:8000/startpage.html](http://localhost:8000/startpage.html)。
 
-> The current page interface is in Simplified Chinese. This documentation is in English.
+## 操作说明
 
-## Usage
-
-| Action | How |
+| 操作 | 方法 |
 | --- | --- |
-| Choose a search engine | Click the logo on the left of the search box |
-| Search | Type a query and press Enter |
-| Add a shortcut | Hover over the empty slot after your shortcuts and click `+` |
-| Edit or delete a shortcut | Hover over the edit button area on the right side of a card |
-| Reorder shortcuts | Hold a card for approximately 420ms, then drag and release |
-| Change appearance | Click the adjustment icon in the bottom-right toolbar |
-| Close appearance settings | Click outside the panel or press Esc |
-| Reset appearance | Click the reset action beside the panel title |
-| Follow wallpaper colors | Enable the checkbox at the bottom of appearance settings |
-| Browse or pause wallpapers | Use the toolbar navigation and playback buttons |
-| Toggle immersive mode | Click the visibility button; hover over the toolbar area to reveal it again |
+| 切换搜索引擎 | 点击搜索框左侧 Logo |
+| 搜索 | 输入关键词，按回车 |
+| 添加快捷链接 | 将鼠标移至快捷链接末尾的空位，点击出现的 `+` |
+| 编辑或删除链接 | 将鼠标移至卡片右侧编辑按钮位置，点击图标 |
+| 排序链接 | 长按卡片约 420ms 后拖动，松手保存 |
+| 调整外观 | 点击右下角工具栏的调节图标 |
+| 关闭外观设置 | 点击面板外部或按 Esc |
+| 恢复默认外观 | 点击设置面板标题旁的“恢复默认” |
+| 跟随壁纸配色 | 勾选外观设置底部的“跟随壁纸取色” |
+| 切换壁纸或暂停轮播 | 使用右下角的箭头与播放控制按钮 |
+| 切换沉浸模式 | 点击可见性按钮；将鼠标移至工具栏位置可再次显示控制按钮 |
 
-Appearance settings save automatically. Defaults are **80% transparency** and **5px background blur**.
+外观设置自动保存，默认值为 **80% 透明度、5px 背景模糊**。
 
-Editing either color disables automatic wallpaper colors. Changing transparency or blur leaves automatic colors enabled.
+手动修改填充色或边线色会自动取消跟随壁纸配色；调整透明度或模糊度不会退出跟随模式。
 
-## Updating wallpapers
+## 更新壁纸
 
-### 1. Add your images
+### 1. 添加图片
 
-Place images in the `wallpapers/` directory beside `update_wallpapers.py`. The script scans **only images directly inside `wallpapers/`**, without searching nested directories, and sorts filenames naturally: `1.png`, `2.jpg`, `10.jpg`.
+将图片放入项目的 `wallpapers/` 目录。脚本**只扫描该目录直属的图片**，不递归扫描嵌套目录，并按文件名自然排序，例如 `1.png`、`2.jpg`、`10.jpg`。
 
-Recognized extensions:
+支持扫描的扩展名：
 
 ```text
 .jpg .jpeg .png .webp .gif .bmp .avif .tif .tiff
 ```
 
-Actual decoding support depends on the image library, and display support depends on the browser. PNG, JPEG, and WebP are recommended.
+实际解码能力取决于图片库，显示能力取决于浏览器，建议优先使用 PNG、JPEG 或 WebP。
 
-> Keep documentation images, such as the root-level `screenshot.jpg`, outside `wallpapers/`. They will not be included in the slideshow.
+> 将截图等文档图片放在 `wallpapers/` 之外。根目录的 `screenshot.jpg` 不会加入轮播。
 
-### 2. Regenerate the list
+### 2. 生成清单
 
-Requires Python 3.8 or later:
+需要 Python 3.8 或更新版本，在项目根目录运行：
 
 ```bash
 python update_wallpapers.py
 ```
 
-On Windows, the script can use PowerShell and the built-in `System.Drawing` library without additional packages. On other platforms, install Pillow. Pillow can also help with formats unsupported by the Windows decoder:
+Windows 下可使用 PowerShell 和系统自带的 `System.Drawing`，无需额外安装依赖。其他系统需要安装 Pillow；Windows 下遇到系统解码器不支持的格式时，也可安装 Pillow：
 
 ```bash
 python -m pip install Pillow
 ```
 
-Run the update command again after installation. The script always resolves `wallpapers/` relative to its own location, regardless of your working directory.
+安装后重新运行更新命令。脚本始终以自身位置定位 `wallpapers/`，不受当前工作目录影响。
 
-### 3. Refresh the page
+### 3. 刷新页面
 
-The script generates `wallpapers.js` in the project root with `wallpapers/`-prefixed image paths, stable filename keys, shading values, and theme colors. Run it again whenever you add, remove, rename, or replace images, then refresh the page.
+脚本会在项目根目录生成 `wallpapers.js`，包含带 `wallpapers/` 前缀的图片路径、文件名标识、遮罩强度与主题色。增删、重命名或替换图片后，重新运行脚本并刷新页面即可。
 
-The existing list is replaced only after every image is processed successfully. If an image cannot be decoded, the previous list is preserved. An empty `wallpapers/` directory produces an empty list. A missing directory reports an error and preserves the existing list.
+所有图片处理成功后才会替换清单；图片无法解码或目录缺失时，保留原清单并报错。空的 `wallpapers/` 目录会生成空清单。
 
-Palettes are computed ahead of time, so automatic colors work when opening the page with `file://`; the browser does not need to read image pixels.
+主题色提前计算，因此以 `file://` 方式打开页面时也能使用自动配色，无需浏览器读取图片像素。
 
-## Project structure
+## 项目结构
 
-```
+```text
 startpage/
-|-- startpage.html       # Page, styles, interactions, and embedded engine SVGs
-|-- wallpapers.js        # Generated wallpaper list and palettes
-|-- update_wallpapers.py # Scans wallpapers/ and updates wallpapers.js
-|-- screenshot.jpg       # README preview; excluded from the slideshow
-|-- README.md
-|-- LICENSE
-|-- wallpapers/
-    |-- 1.png / 2.jpg / ...
-    |-- example.png
-    |-- example.prompt.txt
+├── startpage.html       # 页面、样式、交互逻辑与内嵌引擎 SVG
+├── wallpapers.js        # 自动生成的壁纸清单与主题色
+├── update_wallpapers.py # 扫描 wallpapers/ 并更新清单
+├── screenshot.jpg       # README 页面预览，不参与轮播
+├── README.md
+├── LICENSE
+└── wallpapers/
+    ├── 1.png / 2.jpg / ...
+    ├── example.png
+    └── example.prompt.txt
 ```
 
-The page initializes search, search focus, shortcuts, wallpapers, and appearance separately. Panels share appearance variables; inner controls remain transparent to avoid stacking tint and blur.
+页面分别初始化搜索、搜索聚焦、快捷链接、壁纸与外观设置。面板共享外观变量，内部按钮保持透明，避免重复叠加填充与模糊。
 
-`wallpapers.js` loads through a regular script tag, keeping the project usable without a local server.
+`wallpapers.js` 通过普通脚本标签加载，页面无需本地服务器也可运行。
 
-## Data and privacy
+## 数据与隐私
 
-- Preferences and shortcuts are stored in the browser's `localStorage`. The project does not upload them to a server.
-- Searching sends your query to the selected search provider. Opening a shortcut visits its destination website.
-- Clearing browser site data removes saved preferences. Data does not automatically sync between browsers, browser profiles, or page addresses.
-- Local storage behavior under `file://` depends on the browser. Moving the HTML file or switching to an HTTP address may make previously saved preferences unavailable.
+- 设置与快捷链接存储在当前浏览器的 `localStorage` 中，项目不会将其上传至服务器。
+- 搜索时，关键词会发送至所选搜索引擎；打开快捷链接会访问对应网站。
+- 清除浏览器站点数据会清除已保存设置。不同浏览器、浏览器配置或访问地址之间的数据不会自动同步。
+- `file://` 下的本地存储行为取决于浏览器。移动 HTML 文件或改用 HTTP 地址后，可能无法读取原地址的设置。
 
-## Troubleshooting
+## 常见问题
 
-**New images do not appear**
+**新图片没有出现在轮播中？**
 
-Check that the images are directly inside `wallpapers/`, run `python update_wallpapers.py`, and refresh. Try a hard refresh if the browser caches the previous list.
+确认图片直接位于 `wallpapers/` 中，运行 `python update_wallpapers.py` 后刷新。若浏览器缓存了旧清单，可尝试强制刷新。
 
-**Colors change when the wallpaper changes**
+**颜色为什么随壁纸变化？**
 
-Automatic wallpaper colors are enabled. Edit the fill or border color to switch to manual colors, or disable the checkbox directly.
+“跟随壁纸取色”已开启。修改填充色或边线色即可切换为手动配色，也可以直接取消勾选。
 
-**Background blur is missing**
+**背景模糊不明显？**
 
-Use a browser that supports `backdrop-filter` and set blur above zero. Blur is less noticeable over flat backgrounds.
+需要浏览器支持 `backdrop-filter`，并将模糊度设为大于 0。纯色背景下的模糊效果也会较弱。
 
-## Contributing
+## 贡献
 
-Issues and pull requests are welcome. For visual or interaction bugs, include your browser version, reproduction steps, and a screenshot.
+欢迎通过 Issue 反馈问题，或通过 Pull Request 提交改进。反馈视觉或交互问题时，请附上浏览器版本、复现步骤和截图。
 
-## License
+## 许可
 
-The project code is licensed under the [MIT License](LICENSE).
+项目代码采用 [MIT 许可证](LICENSE)。
 
-Wallpaper images and third-party logos remain subject to their respective owners' rights and licenses; the MIT License does not grant additional rights to those assets.
+壁纸图片与第三方 Logo 遵循各自权利人的授权；MIT 许可证不额外授予这些素材的使用权。
