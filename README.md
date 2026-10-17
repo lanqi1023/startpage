@@ -19,11 +19,7 @@
 
 ## 快速开始
 
-使用浏览器打开 `startpage.html`
-
-> Python 仅用于更新壁纸列表和主题色，打开页面不需要安装 Python。
-
-或者在项目根目录启动本地静态服务：
+使用浏览器直接打开 `startpage.html`，或者在项目根目录启动本地静态服务：
 
 ```bash
 python -m http.server 8000
