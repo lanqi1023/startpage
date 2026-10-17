@@ -2,25 +2,25 @@
 
 A lightweight, wallpaper-first browser start page built with plain HTML, CSS, and JavaScript. No build step, backend, or account required.
 
-![Example wallpaper: a quiet mountain lake at blue hour](example-wallpaper.png)
+![Startpage preview](screenshot.jpg)
 
-*An AI-generated example wallpaper designed for translucent panels and readable white text. Generated with the built-in image generation tool; [generation prompt](example-wallpaper.prompt.txt).*
+*The preview above shows the page. An AI-generated [example wallpaper](wallpapers/example.png) and its [generation prompt](wallpapers/example.prompt.txt) are included in `wallpapers/`.*
 
 ## Features
 
-- **Search engines** ? Switch between Bing, Google, and Baidu from the search box logo. Press Enter to search.
-- **Quick links** ? Add, edit, and delete shortcuts, use custom SVG icons, and reorder cards by dragging.
-- **Wallpaper slideshow** ? Browse wallpapers manually or play a slideshow with 30-second intervals.
-- **Appearance controls** ? Adjust transparency, background blur, fill color, and border color across panels.
-- **Wallpaper colors** ? Follow precomputed wallpaper palettes or adjust either color to switch back to manual styling.
-- **Focused search** ? Gently dim surrounding content while keeping the search box bright.
-- **Immersive mode** ? Hide the search box and shortcuts to enjoy your wallpaper.
-- **Local preferences** ? Keep settings and shortcuts in your browser's local storage.
+- **Search engines** - Switch between Bing, Google, and Baidu from the search box logo. Press Enter to search.
+- **Quick links** - Add, edit, and delete shortcuts, use custom SVG icons, and reorder cards by dragging.
+- **Wallpaper slideshow** - Browse wallpapers manually or play a slideshow with 30-second intervals.
+- **Appearance controls** - Adjust transparency, background blur, fill color, and border color across panels.
+- **Wallpaper colors** - Follow precomputed wallpaper palettes or adjust either color to switch back to manual styling.
+- **Focused search** - Gently dim surrounding content while keeping the search box bright.
+- **Immersive mode** - Hide the search box and shortcuts to enjoy your wallpaper.
+- **Local preferences** - Keep settings and shortcuts in your browser's local storage.
 
 ## Getting started
 
 1. Download the project.
-2. Keep `startpage.html`, `wallpapers.js`, and the wallpaper images in the same directory.
+2. Keep `startpage.html` and `wallpapers.js` in the project root, with images inside `wallpapers/`. Preserve this directory structure.
 3. Open `startpage.html` in a modern browser.
 
 You can set the page as your browser homepage. Replacing the new tab page may require an extension, depending on your browser.
@@ -61,7 +61,7 @@ Editing either color disables automatic wallpaper colors. Changing transparency 
 
 ### 1. Add your images
 
-Place images next to `update_wallpapers.py`. The script scans **all images in its own directory**, without searching subdirectories, and sorts filenames naturally: `1.png`, `2.jpg`, `10.jpg`.
+Place images in the `wallpapers/` directory beside `update_wallpapers.py`. The script scans **only images directly inside `wallpapers/`**, without searching nested directories, and sorts filenames naturally: `1.png`, `2.jpg`, `10.jpg`.
 
 Recognized extensions:
 
@@ -71,7 +71,7 @@ Recognized extensions:
 
 Actual decoding support depends on the image library, and display support depends on the browser. PNG, JPEG, and WebP are recommended.
 
-> Screenshots and other images in this directory are included too. Store non-wallpaper images elsewhere.
+> Keep documentation images, such as the root-level `screenshot.jpg`, outside `wallpapers/`. They will not be included in the slideshow.
 
 ### 2. Regenerate the list
 
@@ -87,13 +87,13 @@ On Windows, the script can use PowerShell and the built-in `System.Drawing` libr
 python -m pip install Pillow
 ```
 
-Run the update command again after installation. The script always scans its own directory, regardless of your working directory.
+Run the update command again after installation. The script always resolves `wallpapers/` relative to its own location, regardless of your working directory.
 
 ### 3. Refresh the page
 
-The script generates `wallpapers.js` with image paths, stable filename keys, shading values, and theme colors. Run it again whenever you add, remove, rename, or replace images, then refresh the page.
+The script generates `wallpapers.js` in the project root with `wallpapers/`-prefixed image paths, stable filename keys, shading values, and theme colors. Run it again whenever you add, remove, rename, or replace images, then refresh the page.
 
-The existing list is replaced only after every image is processed successfully. If an image cannot be decoded, the previous list is preserved. An empty image directory produces an empty list.
+The existing list is replaced only after every image is processed successfully. If an image cannot be decoded, the previous list is preserved. An empty `wallpapers/` directory produces an empty list. A missing directory reports an error and preserves the existing list.
 
 Palettes are computed ahead of time, so automatic colors work when opening the page with `file://`; the browser does not need to read image pixels.
 
@@ -101,12 +101,16 @@ Palettes are computed ahead of time, so automatic colors work when opening the p
 
 ```text
 startpage/
-??? startpage.html       # Page, styles, interactions, and embedded engine SVGs
-??? wallpapers.js        # Generated wallpaper list and palettes
-??? update_wallpapers.py # Image scanning and palette generation
-??? README.md
-??? LICENSE
-??? *.png / *.jpg / ?    # Local wallpapers
+|-- startpage.html       # Page, styles, interactions, and embedded engine SVGs
+|-- wallpapers.js        # Generated wallpaper list and palettes
+|-- update_wallpapers.py # Scans wallpapers/ and updates wallpapers.js
+|-- screenshot.jpg       # README preview; excluded from the slideshow
+|-- README.md
+|-- LICENSE
+`-- wallpapers/
+    |-- 1.png / 2.jpg / ...
+    |-- example.png
+    `-- example.prompt.txt
 ```
 
 The page initializes search, search focus, shortcuts, wallpapers, and appearance separately. Panels share appearance variables; inner controls remain transparent to avoid stacking tint and blur.
@@ -124,7 +128,7 @@ The page initializes search, search focus, shortcuts, wallpapers, and appearance
 
 **New images do not appear**
 
-Check that the images are next to the script, run `python update_wallpapers.py`, and refresh. Try a hard refresh if the browser caches the previous list.
+Check that the images are directly inside `wallpapers/`, run `python update_wallpapers.py`, and refresh. Try a hard refresh if the browser caches the previous list.
 
 **Colors change when the wallpaper changes**
 
