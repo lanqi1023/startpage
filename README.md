@@ -99,7 +99,7 @@ Palettes are computed ahead of time, so automatic colors work when opening the p
 
 ## Project structure
 
-```text
+```
 startpage/
 |-- startpage.html       # Page, styles, interactions, and embedded engine SVGs
 |-- wallpapers.js        # Generated wallpaper list and palettes
