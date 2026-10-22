@@ -79,7 +79,7 @@ def sample_images(paths):
     else:
         for path in paths:
             with Image.open(path) as image:
-                yield list(image.convert("RGBA").resize((32, 32)).getdata())
+                yield list(image.convert("RGBA").resize((32, 32)).get_flattened_data())
 
 
 def extract_theme(pixels):

@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Start Page</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <div id="wallpapers" class="wallpapers" aria-hidden="true">
+    <div class="wallpaper"></div>
+    <div class="wallpaper"></div>
+  </div>
+  <div class="page">
+    <main>
+      <form id="search-form" class="search-shell" autocomplete="off" role="search">
+        <div class="engine-picker">
+          <button id="engine-toggle" type="button" aria-label="Choose search engine" aria-expanded="false" aria-controls="engine-menu">
+            <span id="engine-logo" aria-hidden="true"></span>
+            <svg class="engine-chevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m4 6 4 4 4-4"/></svg>
+          </button>
+          <div id="engine-menu" class="engine-menu" role="group" aria-label="Search engine" hidden>
+            <button class="engine" type="button" data-engine="bing" aria-pressed="true">Bing</button>
+            <button class="engine" type="button" data-engine="google" aria-pressed="false">Google</button>
+            <button class="engine" type="button" data-engine="baidu" aria-pressed="false">百度</button>
+          </div>
+        </div>
+        <input id="query" name="q" type="search" role="combobox" aria-autocomplete="list" aria-controls="launcher-results" aria-expanded="false" aria-label="搜索网页">
+        <div id="launcher-panel" class="launcher-panel" hidden>
+          <div id="launcher-results" role="listbox" aria-label="快捷链接与网页搜索"></div>
+        </div>
+      </form>
+      <span id="launcher-status" class="sr-only" role="status" aria-live="polite"></span>
+
+      <nav class="quick-section" aria-label="快捷网站">
+        <div class="links">
+          <button id="add-link" class="add-link-button" type="button" aria-label="添加快捷链接" title="添加快捷链接">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+          </button>
+        </div>
+      </nav>
+    </main>
+  </div>
+
+  <div class="wallpaper-controls" role="group" aria-label="背景控制">
+    <button id="appearance-toggle" type="button" aria-label="外观设置" title="外观设置" aria-haspopup="dialog" aria-controls="appearance-dialog">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3" fill="var(--surface)"/><circle cx="15" cy="17" r="3" fill="var(--surface)"/></svg>
+    </button>
+    <button id="wallpaper-prev" type="button" aria-label="上一张背景" title="上一张背景">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+        stroke-linejoin="round" aria-hidden="true">
+        <path d="m14.5 5.5-6.5 6.5 6.5 6.5" />
+      </svg>
+    </button>
+    <button id="wallpaper-play" type="button" aria-label="暂停自动切换" aria-pressed="true" title="暂停自动切换">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path id="playback-shape" d="M6 5h4v14H6zM14 5h4v14h-4z" />
+      </svg>
+    </button>
+    <button id="wallpaper-next" type="button" aria-label="下一张背景" title="下一张背景">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+        stroke-linejoin="round" aria-hidden="true">
+        <path d="m9.5 5.5 6.5 6.5-6.5 6.5" />
+      </svg>
+    </button>
+    <button id="wallpaper-visibility" type="button" aria-label="隐藏页面内容" aria-pressed="false" title="隐藏页面内容">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+        stroke-linejoin="round" aria-hidden="true">
+        <path d="M2.5 12s3.5-5.5 9.5-5.5 9.5 5.5 9.5 5.5-3.5 5.5-9.5 5.5S2.5 12 2.5 12Z" />
+        <circle cx="12" cy="12" r="2.5" />
+        <path id="visibility-slash" d="m3 21 18-18" />
+      </svg>
+    </button>
+  </div>
+
+  <dialog id="link-dialog" class="link-dialog" aria-labelledby="link-dialog-title">
+    <form id="link-form">
+      <h2 id="link-dialog-title">添加链接</h2>
+      <label for="link-name-input">名称</label>
+      <input id="link-name-input" name="name" type="text" maxlength="32" required autocomplete="off">
+      <label for="link-url-input">网址</label>
+      <input id="link-url-input" name="url" type="text" inputmode="url" placeholder="https://example.com" required autocomplete="off">
+      <div class="svg-field-head">
+        <label for="link-svg-input">SVG 代码（可选）</label>
+        <span class="svg-preview" aria-hidden="true"><img id="link-svg-preview" alt=""></span>
+      </div>
+      <textarea id="link-svg-input" name="svg" maxlength="1000000" spellcheck="false"></textarea>
+      <p id="link-status" class="dialog-status" role="status" hidden></p>
+      <div class="dialog-actions">
+        <button id="link-delete" class="delete" type="button" hidden>删除</button>
+        <button id="link-cancel" type="button">取消</button>
+        <button class="primary" type="submit">保存</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="appearance-dialog" class="appearance-dialog" aria-labelledby="appearance-title">
+    <div class="appearance-head">
+      <h2 id="appearance-title">外观设置</h2>
+      <button id="appearance-reset" type="button">恢复默认</button>
+    </div>
+    <label for="surface-transparency">透明度 <output id="transparency-value" for="surface-transparency">80%</output></label>
+    <input id="surface-transparency" type="range" min="0" max="100" value="80">
+    <label for="surface-blur">模糊度 <output id="blur-value" for="surface-blur">5px</output></label>
+    <input id="surface-blur" type="range" min="0" max="40" value="5">
+    <label for="link-columns">每行链接 <output id="link-columns-value" for="link-columns">6 个</output></label>
+    <input id="link-columns" type="range" min="5" max="10" step="1" value="6">
+    <div class="appearance-colors">
+      <label for="surface-color">填充 <input id="surface-color" type="color" value="#131922"></label>
+      <label for="border-color">线条 <input id="border-color" type="color" value="#ebf2ff"></label>
+    </div>
+    <label for="theme-auto" class="auto-theme-label">跟随壁纸取色 <input id="theme-auto" type="checkbox"></label>
+  </dialog>
+
+  <script src="wallpapers.js"></script>
+  <script src="script.js"></script>
+</body>
+
+</html>
